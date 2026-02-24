@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ABCer专属MBTI测试</title>
+    <style>
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background-color: #f7f9fc;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .container {
+            background: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            max-width: 500px;
+            width: 100%;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .question-text {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .option-btn {
+            background: #f0f4f8;
+            border: 2px solid transparent;
+            padding: 12px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: left;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+        .option-btn:hover {
+            background: #e2e8f0;
+            border-color: #cbd5e1;
+        }
+        .nav-btn {
+            margin-top: 20px;
+            background: transparent;
+            color: #64748b;
+            border: none;
+            cursor: pointer;
+            text-decoration: underline;
+            padding: 0;
+            font-size: 0.9rem;
+            display: none;
+        }
+        .result-title {
+            color: #2563eb;
+            font-size: 1.5rem;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        .result-desc {
+            font-size: 1rem;
+            line-height: 1.6;
+            color: #475569;
+        }
+        .restart-btn {
+            display: block;
+            width: 100%;
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 20px;
+            cursor: pointer;
+            font-size: 1rem;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="intro-screen">
+        <div class="header">
+            <h2>🌟【ABCer专属MBTI】</h2>
+            <p>7种ABCer，你是哪一种？</p >
+        </div>
+        <p style="color: #666; font-size: 0.95rem; line-height: 1.5;">嘿！来ABC美好社会咨询社的小伙伴们，每个人都带着不同的故事和期待～今天，我们为你量身定制了一套专属人格测试！10道题，测出你在公益咨询中的真实画像。</p >
+        <button class="restart-btn" onclick="startTest()">开始测试</button>
+    </div>
+
+    <div id="question-screen" style="display: none;">
+        <div class="question-text" id="q-text"></div>
+        <div class="options" id="q-options"></div>
+        <button class="nav-btn" id="back-btn" onclick="goBack()">← 返回上一题</button>
+    </div>
+
+    <div id="result-screen" style="display: none;">
+        <h2 class="result-title" id="r-title"></h2>
+        <div class="result-desc" id="r-desc"></div>
+        <button class="restart-btn" onclick="resetTest()">重新测试</button>
+    </div>
+</div>
+
+<script>
+    const quizData = {
+        Q1: {
+            text: "Q1. 难得的周末空闲，你最想怎么度过？",
+            options: [
+                { text: "A. 约朋友探店看展，解锁新体验", target: "Q2" },
+                { text: "B. 参加行业沙龙，听听前沿分享", target: "Q3" },
+                { text: "C. 找个咖啡馆，安安静静看书", target: "Q4" },
+                { text: "D. 约三五好友，聊聊近况和心事", target: "Q5" }
+            ]
+        },
+        Q2: {
+            text: "Q2. 你更向往哪种团队氛围？",
+            options: [
+                { text: "A. 有前辈带着，能学到很多东西", target: "R_1" },
+                { text: "B. 大家各有所长，高效协作打硬仗", target: "Q6" },
+                { text: "C. 温暖包容，可以卸下防备做自己", target: "Q7" },
+                { text: "D. 开放自由，允许天马行空的脑洞", target: "Q8" }
+            ]
+        },
+        Q3: {
+            text: "Q3. 你对“公益”的第一印象是？",
+            options: [
+                { text: "A. 一个能让专业发挥更大价值的地方", target: "R_2" },
+                { text: "B. 一个可以深入了解公益生态的机会", target: "Q6" },
+                { text: "C. 一个能让心慢下来、暖起来的地方", target: "Q7" },
+                { text: "D. 一个可以探索人生新可能的实验场", target: "Q8" }
+            ]
+        },
+        Q4: {
+            text: "Q4. 你最近的状态，更像哪一句？",
+            options: [
+                { text: "A. 世界那么大，我想去试试", target: "R_3" },
+                { text: "B. 用专业，做点有意义的事", target: "Q6" },
+                { text: "C. 在疲惫的生活里，找一点温柔的光", target: "Q7" },
+                { text: "D. 人生是一场实验，答案在路上", target: "Q8" }
+            ]
+        },
+        Q5: {
+            text: "Q5. 你更愿意和什么样的伙伴共事？",
+            options: [
+                { text: "A. 愿意教我、带我成长的人", target: "R_1" },
+                { text: "B. 专业能力强、能打硬仗的人", target: "Q6" },
+                { text: "C. 真诚温暖、可以交心的人", target: "R_4" },
+                { text: "D. 脑洞大、敢想敢试的人", target: "Q8" }
+            ]
+        },
+        Q6: {
+            text: "Q6. 你希望用专业经验在公益领域做什么？",
+            options: [
+                { text: "A. 把技能用在更真实、有意义的场景", target: "R_2" },
+                { text: "B. 跳出单一领域，看见更大的公益生态", target: "R_5" },
+                { text: "C. 带团队试试不一样的路，玩点新的", target: "R_6" },
+                { text: "D. 既想贡献价值，也想找到并肩的伙伴", target: "Q9" }
+            ]
+        },
+        Q7: {
+            text: "Q7. 你寻找的“心的出口”，更像哪一种？",
+            options: [
+                { text: "A. 用行动找回初心，不再被疲惫填满", target: "R_4" },
+                { text: "B. 和真诚的人建立连接，互相温暖", target: "R_4" },
+                { text: "C. 在帮助别人的同时，重新认识自己", target: "Q10" },
+                { text: "D. 想用新方式理解世界和自己", target: "R_7" }
+            ]
+        },
+        Q8: {
+            text: "Q8. 你想尝试的“新可能”，更接近？",
+            options: [
+                { text: "A. 把兴趣、专业和社会议题连接起来", target: "R_3" },
+                { text: "B. 用经验孵化创新，带出新的可能", target: "R_6" },
+                { text: "C. 重新构建自己的世界观和人生模型", target: "R_7" },
+                { text: "D. 验证“我适不适合做这类事”", target: "R_3" }
+            ]
+        },
+        Q9: {
+            text: "Q9. 你希望从ABC带走的是什么？",
+            options: [
+                { text: "A. 一个有影响力的实战案例", target: "R_2" },
+                { text: "B. 对公益生态更整体的理解", target: "R_5" },
+                { text: "C. 一次用经验创造新可能的尝试", target: "R_6" },
+                { text: "D. 一群志同道合的战友", target: "R_2" }
+            ]
+        },
+        Q10: {
+            text: "Q10. 你期待在公益中遇见什么？",
+            options: [
+                { text: "A. 一段温暖有力量的记忆", target: "R_4" },
+                { text: "B. 一次重新与内心对话的旅程", target: "R_4" },
+                { text: "C. 一种全新的思维方式", target: "R_7" },
+                { text: "D. 一个重新定义人生的契机", target: "R_7" }
+            ]
+        }
+    };
+
+    const resultsData = {
+        R_1: { 
+            title: "小试锋芒的新鲜人", 
+            quote: "“世界那么大，我想去试试”",
+            description: "你是带着好奇心和勇气踏入公益咨询世界的“实践派玩家”。在校园里积累了知识，想在真实世界里跑一次“副本”。你渴望结识有趣的人，积累第一份项目经验，试着把兴趣、专业和社会议题连接起来。",
+            harvest: "🔮 你在ABC能收获什么：\n一份扎实的项目经历，一群愿意带你的前辈，一次把好奇心变成行动力的机会。你会发现，世界很大，而你也可以成为改变的一部分。"
+        },
+        R_2: { 
+            title: "专业价值派", 
+            quote: "“用专业，做点有意义的事”",
+            description: "你拥有较强的专业背景，期待把自己的技能用于更真实、更有意义的场景。在项目中希望既能贡献价值，也能找到能够并肩作战的伙伴，一起把事情做成。",
+            harvest: "🔮 你在ABC能收获什么：\n一个有影响力的案例，一群志同道合的战友，一次专业与公益深度融合的实践。你会发现，你的技能可以点亮别人，也可以照亮自己。"
+        },
+        R_3: { 
+            title: "理想试探者", 
+            quote: "“我想看看，我适不适合”",
+            description: "你刚踏入职场，渴望探索更多可能性。对公共议题有兴趣，却还不确定方向。希望通过一次公益咨询，积累案例、增强职业感知，也验证“我适不适合做这类事”。",
+            harvest: "🔮 你在ABC能收获什么：\n一次低成本的职业试错机会，一个验证兴趣与能力的真实场景，一群帮你打开视野的同行者。你会发现，答案不在别处，就在行动的路上。"
+        },
+        R_4: { 
+            title: "心理链接追寻者", 
+            quote: "“在疲惫的生活里，找一点温柔的光”",
+            description: "你在高强度工作中寻找“心的出口”。希望通过参与公益，让自己不再被疲惫填满，用行动找回初心，同时与同样真诚的人建立连接。",
+            harvest: "🔮 你在ABC能收获什么：\n一段温暖有力量的记忆，一群能深夜聊人生的伙伴，一次重新与内心对话的旅程。你会发现，公益不仅是在帮助别人，也是在治愈自己。"
+        },
+        R_5: { 
+            title: "公益务实求变者", 
+            quote: "“跳出框框，看见更大的公益”",
+            description: "你深耕公益多年，希望跳出单一机构或单个领域，接触更多议题与视角。希望在ABC获得新的方法论、新的合作伙伴，以及对公益生态更整体的理解。",
+            harvest: "🔮 你在ABC能收获什么：\n一次跨领域的思想碰撞，一套可迁移的方法论，一群能陪你探索公益新可能的伙伴。你会发现，公益的边界，比你想象的更宽广。"
+        },
+        R_6: { 
+            title: "意义主义老将", 
+            quote: "“不是重复，是重新创造”",
+            description: "你有丰富的咨询或专业经验，希望将商业逻辑与公益价值结合起来。不是为了“换个场景做同样的事情”，而是想尝试一些不同的挑战，带出新的可能。",
+            harvest: "🔮 你在ABC能收获什么：\n一个打破惯性的新战场，一次用经验孵化创新的机会，一群愿意陪你“搞点不一样的”同行者。你会发现，经验的最高价值，是创造新的可能。"
+        },
+        R_7: { 
+            title: "人生实验派", 
+            quote: "“人生是一场实验，答案在路上”",
+            description: "你进入人生的新阶段，想用新的方式理解世界、理解自己。通过参与公益项目，在帮助别人的同时，也重新构建自己的世界观和人生模型。",
+            harvest: "🔮 你在ABC能收获什么：\n一种全新的思维方式，一次打破边界的尝试，一个重新定义人生的契机。你会发现，人生是一场实验，而你已经走在探索答案的路上。"
+        }
+    };
+
+    let currentStep = 'Q1';
+    let historyStack = [];
+
+    const screens = {
+        intro: document.getElementById('intro-screen'),
+        question: document.getElementById('question-screen'),
+        result: document.getElementById('result-screen')
+    };
+
+    function startTest() {
+        screens.intro.style.display = 'none';
+        screens.question.style.display = 'block';
+        renderStep('Q1');
+    }
+
+    function renderStep(stepId) {
+        currentStep = stepId;
+        const backBtn = document.getElementById('back-btn');
+        backBtn.style.display = historyStack.length > 0 ? 'inline-block' : 'none';
+
+        if (stepId.startsWith('R_')) {
+            showResult(stepId);
+            return;
+        }
+
+        const qData = quizData[stepId];
+        document.getElementById('q-text').innerText = qData.text;
+        
+        const optionsContainer = document.getElementById('q-options');
+        optionsContainer.innerHTML = '';
+        
+        qData.options.forEach(opt => {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.innerText = opt.text;
+            btn.onclick = () => handleSelection(opt.target);
+            optionsContainer.appendChild(btn);
+        });
+    }
+
+    function handleSelection(targetId) {
+        historyStack.push(currentStep);
+        renderStep(targetId);
+    }
+
+    function goBack() {
+        if (historyStack.length > 0) {
+            const prevStep = historyStack.pop();
+            screens.result.style.display = 'none';
+            screens.question.style.display = 'block';
+            renderStep(prevStep);
+        }
+    }
+
+    function showResult(resultId) {
+        screens.question.style.display = 'none';
+        screens.result.style.display = 'block';
+        
+        const resData = resultsData[resultId];
+        document.getElementById('r-title').innerText = "你属于：" + resData.title;
+        
+        const descHtml = `
+            <div style="font-weight: bold; font-size: 1.1rem; margin-bottom: 12px; color: #2563eb; text-align: center;">
+                ${resData.quote}
+            </div>
+            <div style="margin-bottom: 20px; text-align: justify;">
+                ${resData.description}
+            </div>
+            <div style="font-size: 0.95rem; background: #e2e8f0; padding: 15px; border-radius: 8px;">
+                ${resData.harvest.replace(/\n/g, '<br>')}
+            </div>
+        `;
+        document.getElementById('r-desc').innerHTML = descHtml;
+    }
+
+    function resetTest() {
+        historyStack = [];
+        screens.result.style.display = 'none';
+        screens.intro.style.display = 'block';
+        currentStep = 'Q1';
+    }
+</script>
+
+</body>
+</html>
